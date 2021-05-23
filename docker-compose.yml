@@ -16,9 +16,9 @@ services:
     command:
       - -c
       - |
+        npm install
         npx prisma introspect
         npx prisma generate
-        npm run build
     environment:
       DATABASE_URL: ${DATABASE_URL}
       LISTEN_PORT: 4000

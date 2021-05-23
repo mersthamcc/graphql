@@ -9,7 +9,8 @@ export const Member = objectType({
         t.model.id();
         t.model.registrationDate();
         t.model.attributes();
-        t.model.owner();
+        t.model.ownerUserId();
+        t.model.subscription();
     }
 });
 
@@ -129,16 +130,25 @@ export const Pricelist = objectType({
     }
 });
 
+export const MemberSubscriptionInput = inputObjectType({
+    name: "MemberSubscriptionInput",
+    description: "A definition of a member subscription",
+    definition(t) {
+        t.field("addedDate", { type: "DateTime" });
+        t.field("year", { type: "Int" });
+        t.field("price", { type: "Float" });
+        t.field("pricelistItemId", { type: "Int" });
+        t.field("orderId", { type: "Int" });
+    }
+});
+
 export const MemberInput = inputObjectType({
     name: "MemberInput",
     description: "A definition of a member",
     definition(t) {
-        t.field("givenName", { type: "String" });
-        t.field("familyName", { type: "String" });
-        t.field("gender", { type: "Gender" });
         t.field("registrationDate", { type: "DateTime" });
-        t.field("category", { type: "String" });
         t.list.field("attributes", { type: "AttributeInput" });
+        t.field("subscription", { type: "MemberSubscriptionInput"});
     }
 });
 
@@ -148,5 +158,18 @@ export const AttributeInput = inputObjectType({
     definition(t) {
         t.field("key", { type: "String" });
         t.field("value", { type: "Json" });
+    }
+});
+
+export const MemberSubscription = objectType({
+    name: "MemberSubscription",
+    description: "",
+    definition(t) {
+        t.model.member();
+        t.model.year();
+        t.model.price();
+        t.date("addedDate");
+        t.model.pricelistItem();
+        t.model.order();
     }
 });

@@ -128,8 +128,9 @@ input JsonNullableFilter {
 type Member {
   attributes(after: MemberAttributeWhereUniqueInput, before: MemberAttributeWhereUniqueInput, first: Int, last: Int): [MemberAttribute!]!
   id: Int!
-  owner: User!
+  ownerUserId: String!
   registrationDate: DateTime!
+  subscription(after: MemberSubscriptionWhereUniqueInput, before: MemberSubscriptionWhereUniqueInput, first: Int, last: Int): [MemberSubscription!]!
 }
 
 type MemberAttribute {
@@ -270,20 +271,16 @@ input MemberIdAttributeIdCompoundUniqueInput {
   memberId: Int!
 }
 
+input MemberIdYearCompoundUniqueInput {
+  memberId: Int!
+  year: Int!
+}
+
 """A definition of a member"""
 input MemberInput {
   attributes: [AttributeInput]
-  category: String
-  familyName: String
-  gender: Gender
-  givenName: String
   registrationDate: DateTime
-}
-
-input MemberListRelationFilter {
-  every: MemberWhereInput
-  none: MemberWhereInput
-  some: MemberWhereInput
+  subscription: MemberSubscriptionInput
 }
 
 input MemberRelationshipListRelationFilter {
@@ -303,6 +300,50 @@ input MemberRelationshipWhereInput {
   relationshipType: EnumRelationshipTypeFilter
 }
 
+""""""
+type MemberSubscription {
+  addedDate: Date
+  member: Member!
+  order: Order
+  price: Float!
+  pricelistItem: PricelistItem!
+  year: Int!
+}
+
+"""A definition of a member subscription"""
+input MemberSubscriptionInput {
+  addedDate: DateTime
+  orderId: Int
+  price: Float
+  pricelistItemId: Int
+  year: Int
+}
+
+input MemberSubscriptionListRelationFilter {
+  every: MemberSubscriptionWhereInput
+  none: MemberSubscriptionWhereInput
+  some: MemberSubscriptionWhereInput
+}
+
+input MemberSubscriptionWhereInput {
+  addedDate: DateTimeFilter
+  AND: [MemberSubscriptionWhereInput!]
+  member: MemberWhereInput
+  memberId: IntFilter
+  NOT: [MemberSubscriptionWhereInput!]
+  OR: [MemberSubscriptionWhereInput!]
+  order: OrderWhereInput
+  orderId: IntNullableFilter
+  price: FloatFilter
+  pricelistItem: PricelistItemWhereInput
+  pricelistItemId: IntFilter
+  year: IntFilter
+}
+
+input MemberSubscriptionWhereUniqueInput {
+  memberId_year: MemberIdYearCompoundUniqueInput
+}
+
 input MemberWhereInput {
   AND: [MemberWhereInput!]
   attributes: MemberAttributeListRelationFilter
@@ -310,29 +351,20 @@ input MemberWhereInput {
   membersRelatedToMe: MemberRelationshipListRelationFilter
   NOT: [MemberWhereInput!]
   OR: [MemberWhereInput!]
-  owner: UserWhereInput
-  ownerUserId: IntFilter
+  ownerUserId: StringFilter
   registrationDate: DateTimeFilter
   relatedMembers: MemberRelationshipListRelationFilter
+  subscription: MemberSubscriptionListRelationFilter
   type: StringFilter
-}
-
-input MemberWhereUniqueInput {
-  id: Int
 }
 
 type Mutation {
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
-
-  """Create a new user"""
-  signupUser(emailAddress: String!, externalId: String!, familyName: String, givenName: String): User
+  createOrder(uuid: String!): Order
 
   """Update an existing member"""
   updateMember(data: MemberInput!, id: Int!): Member
-
-  """Update user details and roles"""
-  updateUserDetails(email: String!, familyName: String, givenName: String, id: Int!, roles: [String!]!): User
 }
 
 input NestedBoolFilter {
@@ -461,6 +493,27 @@ input NewsCommentWhereUniqueInput {
   id: Int
 }
 
+type Order {
+  accountingId: String
+  createDate: Date
+  id: Int!
+  memberSubscription(after: MemberSubscriptionWhereUniqueInput, before: MemberSubscriptionWhereUniqueInput, first: Int, last: Int): [MemberSubscription!]!
+  ownerUserId: String!
+  uuid: String
+}
+
+input OrderWhereInput {
+  accountingId: StringNullableFilter
+  AND: [OrderWhereInput!]
+  createDate: DateTimeFilter
+  id: IntFilter
+  memberSubscription: MemberSubscriptionListRelationFilter
+  NOT: [OrderWhereInput!]
+  OR: [OrderWhereInput!]
+  ownerUserId: StringFilter
+  uuid: StringNullableFilter
+}
+
 type PriceList {
   dateFrom: Date
   dateTo: Date
@@ -509,6 +562,7 @@ input PricelistItemWhereInput {
   includesMatchFees: BoolNullableFilter
   maxAge: IntNullableFilter
   memberCategory: MemberCategoryWhereInput
+  memberSubscription: MemberSubscriptionListRelationFilter
   minAge: IntFilter
   NOT: [PricelistItemWhereInput!]
   OR: [PricelistItemWhereInput!]
@@ -549,11 +603,8 @@ input PriceListWhereUniqueInput {
 
 type Query {
   feed: [News]
-  me: User
   members: [Member]
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]
-  userByEmail(emailAddress: String!): User
-  userByExternalId(externalId: String!): User
 }
 
 enum QueryMode {
@@ -600,26 +651,4 @@ input StringNullableFilter {
   not: NestedStringNullableFilter
   notIn: [String!]
   startsWith: String
-}
-
-type User {
-  email: String!
-  externalId: String
-  familyName: String
-  givenName: String
-  id: Int!
-  members(after: MemberWhereUniqueInput, before: MemberWhereUniqueInput, first: Int, last: Int): [Member!]!
-  roles: Json!
-}
-
-input UserWhereInput {
-  AND: [UserWhereInput!]
-  email: StringFilter
-  externalId: StringNullableFilter
-  familyName: StringNullableFilter
-  givenName: StringNullableFilter
-  id: IntFilter
-  members: MemberListRelationFilter
-  NOT: [UserWhereInput!]
-  OR: [UserWhereInput!]
 }

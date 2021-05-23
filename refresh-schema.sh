@@ -3,7 +3,7 @@
 set -eu
 
 function down() {
-  docker-compose down
+  docker-compose --env-file ../.env down
 }
 
 trap down EXIT
@@ -24,7 +24,7 @@ echo "Running migrations..."
 docker-compose --env-file ../.env run flyway
 
 echo "Running introspection"
-docker-compose run prisma-introspect
+docker-compose --env-file ../.env run prisma-introspect
 
 echo "Running Build..."
 npm run build
