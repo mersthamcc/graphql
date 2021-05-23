@@ -138,6 +138,7 @@ export const MemberSubscriptionInput = inputObjectType({
         t.field("year", { type: "Int" });
         t.field("price", { type: "Float" });
         t.field("pricelistItemId", { type: "Int" });
+        t.field("orderId", { type: "Int" });
     }
 });
 
@@ -169,5 +170,6 @@ export const MemberSubscription = objectType({
         t.model.price();
         t.date("addedDate");
         t.model.pricelistItem();
+        t.model.order();
     }
 });

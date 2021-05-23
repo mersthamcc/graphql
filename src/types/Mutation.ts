@@ -1,8 +1,7 @@
-import {arg, intArg, list, nonNull, objectType, stringArg} from "nexus";
-import {auth, hasRole} from "keycloak-connect-graphql";
+import {arg, intArg, nonNull, objectType, stringArg} from "nexus";
+import {auth} from "keycloak-connect-graphql";
 import {Context} from "../context";
 import {encrypt} from "../helpers/Encryption";
-import {keys} from "nexus-plugin-prisma/dist/utils";
 
 export const Mutation = objectType({
     name: "Mutation",
@@ -34,7 +33,12 @@ export const Mutation = objectType({
                                    }
                                },
                                addedDate: now,
-                               year: args.data.subscription.year
+                               year: args.data.subscription.year,
+                               order: {
+                                   connect: {
+                                       id: args.data.subscription.orderId
+                                   }
+                               }
                            }
                        },
                        attributes: {
@@ -121,6 +125,25 @@ export const Mutation = objectType({
                                 });
                             }))
                         }
+                    }
+                });
+            })
+        });
+
+        t.field("createOrder", {
+            type: "Order",
+            args: {
+                uuid: nonNull(stringArg())
+            },
+            resolve: auth(async (_:any, args: { uuid: string, paymentType: string}, context: Context ) => {
+                const now = new Date();
+
+                return context.prisma.order.create({
+                    data: {
+                        uuid: args.uuid,
+                        createDate: now,
+                        // @ts-ignore
+                        ownerUserId: context.kauth.accessToken.content.sub
                     }
                 });
             })

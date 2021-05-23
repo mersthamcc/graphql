@@ -304,6 +304,7 @@ input MemberRelationshipWhereInput {
 type MemberSubscription {
   addedDate: Date
   member: Member!
+  order: Order
   price: Float!
   pricelistItem: PricelistItem!
   year: Int!
@@ -312,6 +313,7 @@ type MemberSubscription {
 """A definition of a member subscription"""
 input MemberSubscriptionInput {
   addedDate: DateTime
+  orderId: Int
   price: Float
   pricelistItemId: Int
   year: Int
@@ -330,6 +332,8 @@ input MemberSubscriptionWhereInput {
   memberId: IntFilter
   NOT: [MemberSubscriptionWhereInput!]
   OR: [MemberSubscriptionWhereInput!]
+  order: OrderWhereInput
+  orderId: IntNullableFilter
   price: FloatFilter
   pricelistItem: PricelistItemWhereInput
   pricelistItemId: IntFilter
@@ -357,6 +361,7 @@ input MemberWhereInput {
 type Mutation {
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
+  createOrder(uuid: String!): Order
 
   """Update an existing member"""
   updateMember(data: MemberInput!, id: Int!): Member
@@ -486,6 +491,27 @@ type NewsComment {
 
 input NewsCommentWhereUniqueInput {
   id: Int
+}
+
+type Order {
+  accountingId: String
+  createDate: Date
+  id: Int!
+  memberSubscription(after: MemberSubscriptionWhereUniqueInput, before: MemberSubscriptionWhereUniqueInput, first: Int, last: Int): [MemberSubscription!]!
+  ownerUserId: String!
+  uuid: String
+}
+
+input OrderWhereInput {
+  accountingId: StringNullableFilter
+  AND: [OrderWhereInput!]
+  createDate: DateTimeFilter
+  id: IntFilter
+  memberSubscription: MemberSubscriptionListRelationFilter
+  NOT: [OrderWhereInput!]
+  OR: [OrderWhereInput!]
+  ownerUserId: StringFilter
+  uuid: StringNullableFilter
 }
 
 type PriceList {
