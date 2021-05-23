@@ -7,51 +7,6 @@ import {keys} from "nexus-plugin-prisma/dist/utils";
 export const Mutation = objectType({
     name: "Mutation",
     definition(t) {
-        t.field("signupUser", {
-            type: "User",
-            description: "Create a new user",
-            args: {
-                externalId: nonNull(stringArg()),
-                emailAddress: nonNull(stringArg()),
-                familyName: stringArg(),
-                givenName: stringArg(),
-            },
-            resolve: hasRole(["realm:TRUSTED_APPLICATION"])((_: any, args: { externalId: string; emailAddress: string; familyName: string; givenName: string; }, context: Context) => {
-                return context.prisma.user.create({
-                    data: {
-                        externalId: args.externalId,
-                        email: args.emailAddress,
-                        familyName: args.familyName,
-                        givenName: args.givenName,
-                        roles: []
-                    }
-                });
-            })
-        });
-
-        t.field("updateUserDetails", {
-            type: "User",
-            description: "Update user details and roles",
-            args: {
-                id: nonNull(intArg()),
-                roles: nonNull(list(nonNull(stringArg()))),
-                familyName: stringArg(),
-                givenName: stringArg(),
-                email: nonNull(stringArg()),
-            },
-            resolve: hasRole(["realm:TRUSTED_APPLICATION"])((_: any, args: { id: number, roles: string[], familyName: string, givenName: string, email: string }, context: Context) => {
-                return context.prisma.user.update({
-                    where: {id: args.id},
-                    data: {
-                        roles: args.roles,
-                        familyName: args.familyName,
-                        givenName: args.givenName,
-                        email: args.email,
-                    },
-                });
-            })
-        });
-
         t.field("createMember", {
             type: "Member",
             description: "Add a new member to the register",
@@ -60,14 +15,26 @@ export const Mutation = objectType({
             },
             resolve: auth(async (_:any, args: { id: number, data: any }, context: Context ) => {
                 const now = new Date();
+                // @ts-ignore
+                console.log(context.kauth.accessToken.content);
+                // @ts-ignore
+                console.log(context.kauth.accessToken.content.sub);
                 return context.prisma.member.create({
                    data: {
                        type: "member",
                        registrationDate: now,
-                       owner: {
-                           connect: {
-                               // @ts-ignore
-                               email: context.kauth.accessToken.content.email
+                       // @ts-ignore
+                       ownerUserId: context.kauth.accessToken.content.sub,
+                       subscription: {
+                           create: {
+                               price: args.data.subscription.price,
+                               pricelistItem: {
+                                   connect: {
+                                       id: args.data.subscription.pricelistItemId
+                                   }
+                               },
+                               addedDate: now,
+                               year: args.data.subscription.year
                            }
                        },
                        attributes: {
@@ -106,15 +73,9 @@ export const Mutation = objectType({
                         id: args.id
                     }
                 });
-                const me = await context.prisma.user.findUnique({
-                    where: {
-                        // @ts-ignore
-                        email: context.kauth.accessToken.content.email
-                    }
-                });
 
                 // @ts-ignore
-                if (!(currentRecord?.ownerUserId === me?.id || context.kauth.accessToken?.hasRole("realm:ROLE_MEMBERSHIP"))) {
+                if (!(currentRecord?.ownerUserId === context.kauth.accessToken.content.email.id || context.kauth.accessToken?.hasRole("realm:ROLE_MEMBERSHIP"))) {
                     throw new Error("You are not authorised to update this member");
                 }
 

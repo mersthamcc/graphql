@@ -23,38 +23,6 @@ export const Query = objectType({
             })
         });
 
-        t.field("userByEmail", {
-            type: "User",
-            args: {
-                emailAddress: nonNull(stringArg())
-            },
-            resolve: hasRole(["realm:TRUSTED_APPLICATION"])((_: any, args: { emailAddress: string }, context: Context) => {
-                return context.prisma.user.findFirst({
-                    where: {
-                        email: {
-                            equals: args.emailAddress
-                        }
-                    }
-                });
-            })
-        });
-
-        t.field("userByExternalId", {
-            type: "User",
-            args: {
-                externalId: nonNull(stringArg())
-            },
-            resolve: hasRole(["realm:TRUSTED_APPLICATION"])((_: any, args: { externalId: string }, context: Context) => {
-                return context.prisma.user.findFirst({
-                    where: {
-                        externalId: {
-                            equals: args.externalId
-                        }
-                    }
-                });
-            })
-        });
-
         t.list.field("membershipCategories", {
             type: "MemberCategory",
             args: {
@@ -67,18 +35,6 @@ export const Query = objectType({
                     },
                     where: args.where || undefined
                 });
-            })
-        });
-
-        t.field("me", {
-            type: "User",
-            resolve: auth((_: any, args: any, context: Context) => {
-                return context.prisma.user.findUnique({
-                    where: {
-                        // @ts-ignore
-                        email: context.kauth.accessToken.content.email
-                    }
-                })
             })
         });
     },
