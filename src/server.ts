@@ -11,6 +11,7 @@ const Keycloak = require("keycloak-connect");
 const GRAPHQL_PATH = "/graphql";
 
 const app = express();
+app.disable("x-powered-by");
 
 const keycloak = new Keycloak(
   {},
