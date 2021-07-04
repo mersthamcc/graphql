@@ -202,8 +202,26 @@ model Order {
   accountingId       String?              @map("accounting_id")
   ownerUserId        String               @map("owner_user_id")
   memberSubscription MemberSubscription[]
+  payment            Payment[]
 
   @@map("order")
+}
+
+model Payment {
+  id               Int      @id @default(autoincrement())
+  orderId          Int      @map("order_id")
+  type             String
+  reference        String
+  date             DateTime
+  amount           Float
+  processingFees   Float    @map("processing_fees")
+  accountingId     String?  @map("accounting_id")
+  feesAccountingId String?  @map("fees_accounting_id")
+  collected        Boolean? @default(false)
+  reconciled       Boolean? @default(false)
+  order            Order    @relation(fields: [orderId], references: [id])
+
+  @@map("payment")
 }
 
 enum AttributeType {

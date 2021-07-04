@@ -359,6 +359,8 @@ input MemberWhereInput {
 }
 
 type Mutation {
+  addPaymentToOrder(orderId: Int!, payment: PaymentInput!): Payment
+
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
   createOrder(uuid: String!): Order
@@ -499,6 +501,7 @@ type Order {
   id: Int!
   memberSubscription(after: MemberSubscriptionWhereUniqueInput, before: MemberSubscriptionWhereUniqueInput, first: Int, last: Int): [MemberSubscription!]!
   ownerUserId: String!
+  payment(after: PaymentWhereUniqueInput, before: PaymentWhereUniqueInput, first: Int, last: Int): [Payment!]!
   uuid: String
 }
 
@@ -511,7 +514,62 @@ input OrderWhereInput {
   NOT: [OrderWhereInput!]
   OR: [OrderWhereInput!]
   ownerUserId: StringFilter
+  payment: PaymentListRelationFilter
   uuid: StringNullableFilter
+}
+
+type Payment {
+  accountingId: String
+  amount: Float!
+  collected: Boolean
+  date: Date
+  feesAccountingId: String
+  id: Int!
+  order: Order!
+  processingFees: Float!
+  reconciled: Boolean
+  reference: String!
+  type: String!
+}
+
+"""Input for creating or updating payments"""
+input PaymentInput {
+  amount: Float
+  collected: Boolean
+  date: Date
+  id: String
+  processingFees: Float
+  reconciled: Boolean
+  reference: String
+  type: String
+}
+
+input PaymentListRelationFilter {
+  every: PaymentWhereInput
+  none: PaymentWhereInput
+  some: PaymentWhereInput
+}
+
+input PaymentWhereInput {
+  accountingId: StringNullableFilter
+  amount: FloatFilter
+  AND: [PaymentWhereInput!]
+  collected: BoolNullableFilter
+  date: DateTimeFilter
+  feesAccountingId: StringNullableFilter
+  id: IntFilter
+  NOT: [PaymentWhereInput!]
+  OR: [PaymentWhereInput!]
+  order: OrderWhereInput
+  orderId: IntFilter
+  processingFees: FloatFilter
+  reconciled: BoolNullableFilter
+  reference: StringFilter
+  type: StringFilter
+}
+
+input PaymentWhereUniqueInput {
+  id: Int
 }
 
 type PriceList {
@@ -605,6 +663,8 @@ type Query {
   feed: [News]
   members: [Member]
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]
+  myOrders: [Order]
+  orders(where: OrderWhereInput): [Order]
 }
 
 enum QueryMode {
