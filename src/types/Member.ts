@@ -1,175 +1,186 @@
-import {inputObjectType, objectType} from "nexus";
-import {Context} from "../context";
-import {GraphQLResolveInfo} from "graphql";
-import {decrypt} from "../helpers/Encryption";
+import { inputObjectType, objectType } from "nexus";
+import { Context } from "../context";
+import { GraphQLResolveInfo } from "graphql";
+import { decrypt } from "../helpers/Encryption";
 
 export const Member = objectType({
-    name: "Member",
-    definition(t) {
-        t.model.id();
-        t.model.registrationDate();
-        t.model.attributes();
-        t.model.ownerUserId();
-        t.model.subscription();
-    }
+  name: "Member",
+  definition(t) {
+    t.model.id();
+    t.model.registrationDate();
+    t.model.attributes();
+    t.model.ownerUserId();
+    t.model.subscription();
+  },
 });
 
 export const MemberAttribute = objectType({
-    name: "MemberAttribute",
-    async definition(t) {
-        t.model.member();
-        t.model.definition();
-        t.model.createdDate();
-        t.model.updatedDate();
-        t.model.value({
-            resolve: async (root: any, args: any, ctx: Context, info: GraphQLResolveInfo, originalResolver: any) => {
-                const { encrypted: data } = await originalResolver(root, args, ctx, info);
-                const decrypted = await decrypt(data);
-                return JSON.parse(decrypted);
-            }
-        });
-    },
+  name: "MemberAttribute",
+  async definition(t) {
+    t.model.member();
+    t.model.definition();
+    t.model.createdDate();
+    t.model.updatedDate();
+    t.model.value({
+      resolve: async (
+        root: any,
+        args: any,
+        ctx: Context,
+        info: GraphQLResolveInfo,
+        originalResolver: any
+      ) => {
+        const { encrypted: data } = await originalResolver(
+          root,
+          args,
+          ctx,
+          info
+        );
+        const decrypted = await decrypt(data);
+        return JSON.parse(decrypted);
+      },
+    });
+  },
 });
 
 export const MemberCategory = objectType({
-   name: "MemberCategory",
-   description: "",
-   definition(t) {
-       t.model.key();
-       t.model.registrationCode();
-       t.model.form();
-       t.model.pricelistItem({
-           filtering: true,
-           ordering: true,
-       });
-   }
+  name: "MemberCategory",
+  description: "",
+  definition(t) {
+    t.model.key();
+    t.model.registrationCode();
+    t.model.form();
+    t.model.pricelistItem({
+      filtering: true,
+      ordering: true,
+    });
+  },
 });
 
 export const AttributeDefinition = objectType({
-    name: "AttributeDefinition",
-    definition(t) {
-        t.model.key();
-        t.model.type();
-        t.model.choices();
-    }
+  name: "AttributeDefinition",
+  definition(t) {
+    t.model.key();
+    t.model.type();
+    t.model.choices();
+  },
 });
 
 export const MemberFormSection = objectType({
-    name: "MemberFormSection",
-    description: "",
-    definition(t) {
-        t.model.key();
-        t.model.attribute();
-    }
+  name: "MemberFormSection",
+  description: "",
+  definition(t) {
+    t.model.key();
+    t.model.attribute();
+  },
 });
 
 export const MemberCategoryFormSection = objectType({
-    name: "MemberCategoryFormSection",
-    definition(t) {
-        t.model.sortOrder();
-        t.model.section();
-        t.model.category();
-    }
+  name: "MemberCategoryFormSection",
+  definition(t) {
+    t.model.sortOrder();
+    t.model.section();
+    t.model.category();
+  },
 });
 
 export const MemberFormSectionAttribute = objectType({
-   name: "MemberFormSectionAttribute",
-   definition(t) {
-       t.model.sortOrder();
-       t.model.mandatory();
-       t.model.definition();
-       t.model.section();
-   }
+  name: "MemberFormSectionAttribute",
+  definition(t) {
+    t.model.sortOrder();
+    t.model.mandatory();
+    t.model.definition();
+    t.model.section();
+  },
 });
 
 export const PricelistItem = objectType({
-    name: "PricelistItem",
-    definition(t) {
-        t.model.id();
-        t.model.description();
-        t.model.minAge();
-        t.model.maxAge();
-        t.model.includesMatchFees();
-        t.model.memberCategory();
-        t.model.pricelist({
-            filtering: true,
-            ordering: true,
+  name: "PricelistItem",
+  definition(t) {
+    t.model.id();
+    t.model.description();
+    t.model.minAge();
+    t.model.maxAge();
+    t.model.includesMatchFees();
+    t.model.memberCategory();
+    t.model.pricelist({
+      filtering: true,
+      ordering: true,
+    });
+    t.field("currentPrice", {
+      type: "Float",
+      description: "The current price of the item",
+      resolve: async (root: any, args: any, ctx: Context) => {
+        let now = new Date();
+        let result = await ctx.prisma.priceList.findFirst({
+          where: {
+            pricelistItemId: root.id,
+            dateFrom: {
+              lte: now,
+            },
+            dateTo: {
+              gte: now,
+            },
+          },
+          select: {
+            price: true,
+          },
         });
-        t.field("currentPrice", {
-            type: "Float",
-            description: "The current price of the item",
-            resolve: async (root: any, args: any, ctx: Context) => {
-                let now = new Date();
-                let result = await ctx.prisma.priceList.findFirst({
-                    where: {
-                        pricelistItemId: root.id,
-                        dateFrom: {
-                            lte: now
-                        },
-                        dateTo: {
-                            gte: now
-                        }
-                    },
-                    select: {
-                        price: true
-                    }
-                });
-                return result?.price == null ? 0.00 : result?.price;
-            }
-        })
-    }
+        return result?.price == null ? 0.0 : result?.price;
+      },
+    });
+  },
 });
 
 export const Pricelist = objectType({
-    name: "PriceList",
-    definition(t) {
-        t.model.pricelistItem();
-        t.date("dateFrom");
-        t.date("dateTo");
-        t.model.price();
-    }
+  name: "PriceList",
+  definition(t) {
+    t.model.pricelistItem();
+    t.date("dateFrom");
+    t.date("dateTo");
+    t.model.price();
+  },
 });
 
 export const MemberSubscriptionInput = inputObjectType({
-    name: "MemberSubscriptionInput",
-    description: "A definition of a member subscription",
-    definition(t) {
-        t.field("addedDate", { type: "DateTime" });
-        t.field("year", { type: "Int" });
-        t.field("price", { type: "Float" });
-        t.field("pricelistItemId", { type: "Int" });
-        t.field("orderId", { type: "Int" });
-    }
+  name: "MemberSubscriptionInput",
+  description: "A definition of a member subscription",
+  definition(t) {
+    t.field("addedDate", { type: "DateTime" });
+    t.field("year", { type: "Int" });
+    t.field("price", { type: "Float" });
+    t.field("pricelistItemId", { type: "Int" });
+    t.field("orderId", { type: "Int" });
+  },
 });
 
 export const MemberInput = inputObjectType({
-    name: "MemberInput",
-    description: "A definition of a member",
-    definition(t) {
-        t.field("registrationDate", { type: "DateTime" });
-        t.list.field("attributes", { type: "AttributeInput" });
-        t.field("subscription", { type: "MemberSubscriptionInput"});
-    }
+  name: "MemberInput",
+  description: "A definition of a member",
+  definition(t) {
+    t.field("registrationDate", { type: "DateTime" });
+    t.list.field("attributes", { type: "AttributeInput" });
+    t.field("subscription", { type: "MemberSubscriptionInput" });
+  },
 });
 
 export const AttributeInput = inputObjectType({
-    name: "AttributeInput",
-    description: "",
-    definition(t) {
-        t.field("key", { type: "String" });
-        t.field("value", { type: "Json" });
-    }
+  name: "AttributeInput",
+  description: "",
+  definition(t) {
+    t.field("key", { type: "String" });
+    t.field("value", { type: "Json" });
+  },
 });
 
 export const MemberSubscription = objectType({
-    name: "MemberSubscription",
-    description: "",
-    definition(t) {
-        t.model.member();
-        t.model.year();
-        t.model.price();
-        t.date("addedDate");
-        t.model.pricelistItem();
-        t.model.order();
-    }
+  name: "MemberSubscription",
+  description: "",
+  definition(t) {
+    t.model.member();
+    t.model.year();
+    t.model.price();
+    t.date("addedDate");
+    t.model.pricelistItem();
+    t.model.order();
+  },
 });
