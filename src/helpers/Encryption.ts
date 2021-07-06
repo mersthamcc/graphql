@@ -11,7 +11,7 @@ export const encrypt = async function (data: string) {
 };
 
 export const decrypt = async function (cypherText: string) {
-  const buffer = new Buffer(cypherText, "base64");
+  const buffer = Buffer.from(cypherText, "base64");
   const { data: decrypted } = await openpgp.decrypt({
     message: await openpgp.message.read(buffer),
     passwords: [process.env["DATABASE_SECRET"]],

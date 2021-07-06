@@ -1,6 +1,6 @@
-import { nonNull, objectType, stringArg } from "nexus";
-import { auth, hasRole } from "keycloak-connect-graphql";
-import { Context } from "../context";
+import {objectType} from "nexus";
+import {auth, hasRole} from "keycloak-connect-graphql";
+import {Context} from "../context";
 
 export const Query = objectType({
   name: "Query",
