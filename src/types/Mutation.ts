@@ -1,7 +1,7 @@
-import { arg, booleanArg, intArg, nonNull, objectType, stringArg } from "nexus";
-import { auth } from "keycloak-connect-graphql";
-import { Context } from "../context";
-import { encrypt } from "../helpers/Encryption";
+import {arg, intArg, nonNull, objectType, stringArg} from "nexus";
+import {auth} from "keycloak-connect-graphql";
+import {Context} from "../context";
+import {encrypt} from "../helpers/Encryption";
 
 export const Mutation = objectType({
   name: "Mutation",
