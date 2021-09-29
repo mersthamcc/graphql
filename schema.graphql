@@ -366,7 +366,7 @@ type Mutation {
   createOrder(uuid: String!): Order
 
   """Update an existing member"""
-  updateMember(data: MemberInput!, id: Int!): Member
+  updateMember(data: [AttributeInput]!, id: Int!): Member
 }
 
 input NestedBoolFilter {
@@ -660,9 +660,12 @@ input PriceListWhereUniqueInput {
 }
 
 type Query {
+  attributes: [AttributeDefinition]
   feed: [News]
+  member(id: Int!): Member
   members: [Member]
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]
+  memberSummary(length: Int!, start: Int!): [Member]
   myOrders: [Order]
   orders(where: OrderWhereInput): [Order]
 }

@@ -1,6 +1,6 @@
-import {objectType} from "nexus";
-import {auth, hasRole} from "keycloak-connect-graphql";
-import {Context} from "../context";
+import { intArg, nonNull, objectType, stringArg } from "nexus";
+import { auth, hasRole } from "keycloak-connect-graphql";
+import { Context } from "../context";
 
 export const Query = objectType({
   name: "Query",
@@ -22,6 +22,49 @@ export const Query = objectType({
           return context.prisma.member.findMany();
         }
       ),
+    });
+
+    t.list.field("memberSummary", {
+      type: "Member",
+      args: {
+        start: nonNull(intArg()),
+        length: nonNull(intArg()),
+      },
+      resolve: hasRole(["realm:ROLE_MEMBERSHIP"])(
+        (_: any, args: { start: number; length: number }, context: Context) => {
+          return context.prisma.member.findMany({
+            take: args.length,
+            skip: args.start,
+          });
+        }
+      ),
+    });
+
+    t.field("member", {
+      type: "Member",
+      args: {
+        id: nonNull(intArg()),
+      },
+      resolve: hasRole(["realm:ROLE_MEMBERSHIP"])(
+        (_: any, args: { id: number }, context: Context) => {
+          return context.prisma.member.findUnique({
+            where: {
+              id: args.id,
+            },
+          });
+        }
+      ),
+    });
+
+    t.list.field("attributes", {
+      type: "AttributeDefinition",
+      resolve: (_: any, args: any, context: Context) => {
+        return context.prisma.attributeDefinition.findMany({
+          orderBy: {
+            key: "asc",
+          },
+        });
+      },
     });
 
     t.list.field("membershipCategories", {
