@@ -1,7 +1,7 @@
-import {arg, intArg, nonNull, objectType, stringArg} from "nexus";
-import {auth} from "keycloak-connect-graphql";
-import {Context} from "../context";
-import {encrypt} from "../helpers/Encryption";
+import { arg, intArg, list, nonNull, objectType, stringArg } from "nexus";
+import { auth } from "keycloak-connect-graphql";
+import { Context } from "../context";
+import { encrypt } from "../helpers/Encryption";
 
 export const Mutation = objectType({
   name: "Mutation",
@@ -76,7 +76,7 @@ export const Mutation = objectType({
       description: "Update an existing member",
       args: {
         id: nonNull(intArg()),
-        data: nonNull(arg({ type: "MemberInput" })),
+        data: nonNull(list(arg({ type: "AttributeInput" }))),
       },
       resolve: auth(
         async (_: any, args: { id: number; data: any }, context: Context) => {
@@ -88,9 +88,9 @@ export const Mutation = objectType({
 
           if (
             !(
-                // @ts-ignore
-                currentRecord?.ownerUserId === context.kauth.accessToken.content.email.id ||
-                context.kauth.accessToken?.hasRole("realm:ROLE_MEMBERSHIP")
+              // @ts-ignore
+              currentRecord?.ownerUserId === context.kauth.accessToken.content.email.id ||
+              context.kauth.accessToken?.hasRole("realm:ROLE_MEMBERSHIP")
             )
           ) {
             throw new Error("You are not authorised to update this member");
@@ -104,46 +104,42 @@ export const Mutation = objectType({
             data: {
               attributes: {
                 upsert: await Promise.all(
-                  args.data.attributes.map(
-                    async (attr: { key: string; value: any }) => {
-                      const encrypted = await encrypt(
-                        JSON.stringify(attr.value)
-                      );
-                      const attribute = await context.prisma.attributeDefinition.findUnique(
-                        {
-                          where: {
+                  args.data.map(async (attr: { key: string; value: any }) => {
+                    const encrypted = await encrypt(JSON.stringify(attr.value));
+                    const attribute = await context.prisma.attributeDefinition.findUnique(
+                      {
+                        where: {
+                          key: attr.key,
+                        },
+                      }
+                    );
+                    return {
+                      where: {
+                        memberId_attributeId: {
+                          memberId: args.id,
+                          attributeId: attribute ? attribute?.id : 0,
+                        },
+                      },
+                      update: {
+                        value: {
+                          encrypted,
+                        },
+                        updatedDate: now,
+                      },
+                      create: {
+                        value: {
+                          encrypted,
+                        },
+                        createdDate: now,
+                        updatedDate: now,
+                        definition: {
+                          connect: {
                             key: attr.key,
                           },
-                        }
-                      );
-                      return {
-                        where: {
-                          memberId_attributeId: {
-                            memberId: args.id,
-                            attributeId: attribute ? attribute?.id : 0,
-                          },
                         },
-                        update: {
-                          value: {
-                            encrypted,
-                          },
-                          updatedDate: now,
-                        },
-                        create: {
-                          value: {
-                            encrypted,
-                          },
-                          createdDate: now,
-                          updatedDate: now,
-                          definition: {
-                            connect: {
-                              key: attr.key,
-                            },
-                          },
-                        },
-                      };
-                    }
-                  )
+                      },
+                    };
+                  })
                 ),
               },
             },
