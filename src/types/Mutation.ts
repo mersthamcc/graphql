@@ -1,5 +1,5 @@
 import { arg, intArg, list, nonNull, objectType, stringArg } from "nexus";
-import { auth } from "keycloak-connect-graphql";
+import {auth, hasRole} from "keycloak-connect-graphql";
 import { Context } from "../context";
 import { encrypt } from "../helpers/Encryption";
 
@@ -203,6 +203,43 @@ export const Mutation = objectType({
                 },
               },
             },
+          });
+        }
+      ),
+    });
+
+    t.field("saveNews", {
+      type: "News",
+      args: {
+        news: nonNull("NewsInput"),
+      },
+      resolve: hasRole(["realm:ROLE_NEWS"])(
+        async (
+            _: any,
+            args: {
+              news: any;
+            },
+            context: Context
+        ) => {
+          return context.prisma.news.upsert({
+            create: {
+              title: args.news.title,
+              body: args.news.body,
+              author: args.news.author,
+              createdDate: args.news.createdDate,
+              publishDate: args.news.publishDate,
+              path: args.news.path,
+            },
+            update: {
+              title: args.news.title,
+              body: args.news.body,
+              author: args.news.author,
+              publishDate: args.news.publishDate,
+              path: args.news.path,
+            },
+            where: {
+              id: args.news.id,
+            }
           });
         }
       ),

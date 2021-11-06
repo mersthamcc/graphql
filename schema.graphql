@@ -364,6 +364,7 @@ type Mutation {
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
   createOrder(uuid: String!): Order
+  saveNews(news: NewsInput!): News
 
   """Update an existing member"""
   updateMember(data: [AttributeInput]!, id: Int!): Member
@@ -467,10 +468,12 @@ input NestedStringNullableFilter {
 
 type News {
   attributes(after: NewsAttributeWhereUniqueInput, before: NewsAttributeWhereUniqueInput, first: Int, last: Int): [NewsAttribute!]!
+  author: String
   body: String!
   comments(after: NewsCommentWhereUniqueInput, before: NewsCommentWhereUniqueInput, first: Int, last: Int): [NewsComment!]!
   createdDate: DateTime!
   id: Int!
+  path: String
   publishDate: DateTime!
   title: String!
 }
@@ -493,6 +496,17 @@ type NewsComment {
 
 input NewsCommentWhereUniqueInput {
   id: Int
+}
+
+"""Input for creating or updating News"""
+input NewsInput {
+  author: String
+  body: String
+  createdDate: DateTime
+  id: Int
+  path: String
+  publishDate: DateTime
+  title: String
 }
 
 type Order {
@@ -667,6 +681,10 @@ type Query {
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]
   memberSummary(length: Int!, start: Int!): [Member]
   myOrders: [Order]
+  news(length: Int!, searchString: String, start: Int!): [News]
+  newsItem(id: Int!): News
+  newsItemByItem(path: String!): News
+  newsTotals(searchString: String): Totals
   orders(where: OrderWhereInput): [Order]
 }
 
@@ -714,4 +732,12 @@ input StringNullableFilter {
   not: NestedStringNullableFilter
   notIn: [String!]
   startsWith: String
+}
+
+type Totals {
+  """Total amount of records matching the criteria"""
+  totalMatching: Int
+
+  """Total amount of records of given type"""
+  totalRecords: Int
 }

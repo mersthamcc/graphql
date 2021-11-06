@@ -42,6 +42,8 @@ model News {
   publishDate DateTime        @map("publish_date")
   title       String
   body        String
+  author      String?
+  path        String?         @unique
   attributes  NewsAttribute[]
   comments    NewsComment[]
 
