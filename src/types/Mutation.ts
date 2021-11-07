@@ -244,5 +244,26 @@ export const Mutation = objectType({
         }
       ),
     });
+
+    t.field("deleteNews", {
+      type: "News",
+      args: {
+        id: nonNull(intArg())
+      },
+      resolve: hasRole(["realm:ROLE_NEWS"])(
+          async (
+              _: any,
+              args: {
+                id: number;
+              },
+              context: Context
+          ) => {
+            return context.prisma.news.delete({
+              where: {
+                id: args.id
+              }
+            });
+          })
+    });
   },
 });
