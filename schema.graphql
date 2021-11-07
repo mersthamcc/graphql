@@ -364,6 +364,7 @@ type Mutation {
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
   createOrder(uuid: String!): Order
+  deleteNews(id: Int!): News
   saveNews(news: NewsInput!): News
 
   """Update an existing member"""
@@ -675,7 +676,7 @@ input PriceListWhereUniqueInput {
 
 type Query {
   attributes: [AttributeDefinition]
-  feed: [News]
+  feed(page: Int): [News]
   member(id: Int!): Member
   members: [Member]
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]

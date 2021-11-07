@@ -8,10 +8,16 @@ export const Query = objectType({
   definition(t) {
     t.list.field("feed", {
       type: "News",
-      resolve: auth((_: any, args: {}, context: Context) => {
+      args: {
+        page: intArg(),
+      },
+      resolve: auth((_: any, args: { page: number }, context: Context) => {
         return context.prisma.news.findMany({
-          orderBy: { publishDate: "desc" },
+          orderBy: {
+            publishDate: "desc"
+          },
           take: 10,
+          skip: args.page == null ? 0 : (args.page - 1) * 10,
         });
       }),
     });
