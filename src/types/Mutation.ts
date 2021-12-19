@@ -1,5 +1,5 @@
 import { arg, intArg, list, nonNull, objectType, stringArg } from "nexus";
-import {auth, hasRole} from "keycloak-connect-graphql";
+import { auth, hasRole } from "keycloak-connect-graphql";
 import { Context } from "../context";
 import { encrypt } from "../helpers/Encryption";
 
@@ -88,8 +88,9 @@ export const Mutation = objectType({
 
           if (
             !(
-              // @ts-ignore
-              currentRecord?.ownerUserId === context.kauth.accessToken.content.email.id ||
+              currentRecord?.ownerUserId ===
+                // @ts-ignore
+                context.kauth.accessToken.content.email.id ||
               context.kauth.accessToken?.hasRole("realm:ROLE_MEMBERSHIP")
             )
           ) {
@@ -215,11 +216,11 @@ export const Mutation = objectType({
       },
       resolve: hasRole(["realm:ROLE_NEWS"])(
         async (
-            _: any,
-            args: {
-              news: any;
-            },
-            context: Context
+          _: any,
+          args: {
+            news: any;
+          },
+          context: Context
         ) => {
           return context.prisma.news.upsert({
             create: {
@@ -229,6 +230,22 @@ export const Mutation = objectType({
               createdDate: args.news.createdDate,
               publishDate: args.news.publishDate,
               path: args.news.path,
+              uuid: args.news.uuid,
+              draft: args.news.draft,
+              socialSummary: args.news.socialSummary,
+              attributes: {
+                create: await Promise.all(
+                  args.news.attributes?.map(
+                    async (attr: { name: string; value: any }) => {
+                      return {
+                        newsId: args.news.id,
+                        name: attr.name,
+                        value: attr.value,
+                      };
+                    }
+                  )
+                ),
+              },
             },
             update: {
               title: args.news.title,
@@ -236,10 +253,29 @@ export const Mutation = objectType({
               author: args.news.author,
               publishDate: args.news.publishDate,
               path: args.news.path,
+              draft: args.news.draft,
+              socialSummary: args.news.socialSummary,
+              attributes: {
+                upsert: await Promise.all(
+                  args.news.attributes?.map(
+                    async (attr: { name: string; value: any }) => {
+                      return {
+                        create: {
+                          value: attr.value,
+                        },
+                        where: {
+                          newsId: args.news.id,
+                          name: attr.name,
+                        },
+                      };
+                    }
+                  )
+                ),
+              },
             },
             where: {
               id: args.news.id,
-            }
+            },
           });
         }
       ),
@@ -248,22 +284,72 @@ export const Mutation = objectType({
     t.field("deleteNews", {
       type: "News",
       args: {
-        id: nonNull(intArg())
+        id: nonNull(intArg()),
       },
       resolve: hasRole(["realm:ROLE_NEWS"])(
-          async (
-              _: any,
-              args: {
-                id: number;
+        async (
+          _: any,
+          args: {
+            id: number;
+          },
+          context: Context
+        ) => {
+          return context.prisma.news.delete({
+            where: {
+              id: args.id,
+            },
+          });
+        }
+      ),
+    });
+
+    t.field("saveNewsAttributes", {
+      type: "News",
+      args: {
+        id: nonNull(intArg()),
+        attributes: nonNull(list("NewsAttributeInput")),
+      },
+      resolve: hasRole(["realm:ROLE_NEWS"])(
+        async (
+          _: any,
+          args: {
+            id: number;
+            attributes: any;
+          },
+          context: Context
+        ) => {
+          return context.prisma.news.update({
+            where: {
+              id: args.id,
+            },
+            data: {
+              attributes: {
+                upsert: await Promise.all(
+                  args.attributes?.map(
+                    async (attr: { name: string; value: any }) => {
+                      return {
+                        create: {
+                          name: attr.name,
+                          value: attr.value,
+                        },
+                        update: {
+                          value: attr.value,
+                        },
+                        where: {
+                          idx_unique_news_attribute_news_id_name: {
+                            newsId: args.id,
+                            name: attr.name,
+                          },
+                        },
+                      };
+                    }
+                  )
+                ),
               },
-              context: Context
-          ) => {
-            return context.prisma.news.delete({
-              where: {
-                id: args.id
-              }
-            });
-          })
+            },
+          });
+        }
+      ),
     });
   },
 });

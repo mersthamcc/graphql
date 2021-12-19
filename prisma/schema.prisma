@@ -37,15 +37,18 @@ model Member {
 }
 
 model News {
-  id          Int             @id @default(autoincrement())
-  createdDate DateTime        @map("created_date")
-  publishDate DateTime        @map("publish_date")
-  title       String
-  body        String
-  author      String?
-  path        String?         @unique
-  attributes  NewsAttribute[]
-  comments    NewsComment[]
+  id            Int             @id @default(autoincrement())
+  createdDate   DateTime        @map("created_date")
+  publishDate   DateTime        @map("publish_date")
+  title         String
+  body          String
+  author        String?
+  path          String?         @unique
+  uuid          String?         @unique
+  draft         Boolean?
+  socialSummary String?         @map("social_summary")
+  attributes    NewsAttribute[]
+  comments      NewsComment[]
 
   @@map("news")
 }
@@ -57,6 +60,7 @@ model NewsAttribute {
   value  String?
   news   News    @relation(fields: [newsId], references: [id])
 
+  @@unique([newsId, name], name: "idx_unique_news_attribute_news_id_name")
   @@index([newsId], name: "idx_news_attribute_news_id")
   @@map("news_attribute")
 }

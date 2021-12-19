@@ -1,7 +1,7 @@
 import { intArg, nonNull, objectType, stringArg } from "nexus";
 import { auth, hasRole } from "keycloak-connect-graphql";
 import { Context } from "../context";
-import {Totals} from "./Totals";
+import { Totals } from "./Totals";
 
 export const Query = objectType({
   name: "Query",
@@ -13,8 +13,11 @@ export const Query = objectType({
       },
       resolve: auth((_: any, args: { page: number }, context: Context) => {
         return context.prisma.news.findMany({
+          where: {
+            draft: false,
+          },
           orderBy: {
-            publishDate: "desc"
+            publishDate: "desc",
           },
           take: 10,
           skip: args.page == null ? 0 : (args.page - 1) * 10,
@@ -29,87 +32,101 @@ export const Query = objectType({
         length: nonNull(intArg()),
         searchString: stringArg(),
       },
-      resolve: auth((_: any, args: {start: number, length: number, searchString: string}, context: Context) => {
-        return context.prisma.news.findMany({
-          orderBy: { publishDate: "desc" },
-          where: args.searchString == null ? undefined : {
-            OR: [
-              {
-                title: {
-                  contains: args.searchString,
-                  mode: "insensitive",
-                }
-              },
-              {
-                body: {
-                  contains: args.searchString,
-                  mode: "insensitive",
-                }
-              }
-            ]
-          },
-          skip: args.start,
-          take: args.length,
-        });
-      }),
+      resolve: auth(
+        (
+          _: any,
+          args: { start: number; length: number; searchString: string },
+          context: Context
+        ) => {
+          return context.prisma.news.findMany({
+            orderBy: { publishDate: "desc" },
+            where:
+              args.searchString == null
+                ? undefined
+                : {
+                    OR: [
+                      {
+                        title: {
+                          contains: args.searchString,
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        body: {
+                          contains: args.searchString,
+                          mode: "insensitive",
+                        },
+                      },
+                    ],
+                  },
+            skip: args.start,
+            take: args.length,
+          });
+        }
+      ),
     });
 
-    t.field("newsTotals",{
+    t.field("newsTotals", {
       type: "Totals",
       args: {
         searchString: stringArg(),
       },
-      resolve: auth((_: any, args: {searchString: string}, context: Context) => {
-        return {
-          totalRecords: context.prisma.news.count(),
-          totalMatching: context.prisma.news.count({
-            where: args.searchString == null ? undefined : {
-              OR: [
-                {
-                  title: {
-                    contains: args.searchString,
-                    mode: "insensitive",
-                  }
-                },
-                {
-                  body: {
-                    contains: args.searchString,
-                    mode: "insensitive",
-                  }
-                }
-              ]
-            },
-          }),
-        };
-      }),
+      resolve: auth(
+        (_: any, args: { searchString: string }, context: Context) => {
+          return {
+            totalRecords: context.prisma.news.count(),
+            totalMatching: context.prisma.news.count({
+              where:
+                args.searchString == null
+                  ? undefined
+                  : {
+                      OR: [
+                        {
+                          title: {
+                            contains: args.searchString,
+                            mode: "insensitive",
+                          },
+                        },
+                        {
+                          body: {
+                            contains: args.searchString,
+                            mode: "insensitive",
+                          },
+                        },
+                      ],
+                    },
+            }),
+          };
+        }
+      ),
     });
 
     t.field("newsItem", {
       type: "News",
       args: {
-        id: nonNull(intArg())
+        id: nonNull(intArg()),
       },
-      resolve: (_: any, args: {id: number}, context: Context) => {
-          return context.prisma.news.findUnique({
-            where: {
-              id: args.id,
-            }
-          });
-        }
+      resolve: (_: any, args: { id: number }, context: Context) => {
+        return context.prisma.news.findUnique({
+          where: {
+            id: args.id,
+          },
+        });
+      },
     });
 
-    t.field("newsItemByItem", {
+    t.field("newsItemByPath", {
       type: "News",
       args: {
-        path: nonNull(stringArg())
+        path: nonNull(stringArg()),
       },
-      resolve: (_: any, args: {path: string}, context: Context) => {
+      resolve: (_: any, args: { path: string }, context: Context) => {
         return context.prisma.news.findUnique({
           where: {
             path: args.path,
-          }
+          },
         });
-      }
+      },
     });
 
     t.list.field("members", {
