@@ -96,6 +96,11 @@ enum Gender {
   N
 }
 
+input Idx_unique_news_attribute_news_id_nameCompoundUniqueInput {
+  name: String!
+  newsId: Int!
+}
+
 input IntFilter {
   equals: Int
   gt: Int
@@ -364,6 +369,9 @@ type Mutation {
   """Add a new member to the register"""
   createMember(data: MemberInput!): Member
   createOrder(uuid: String!): Order
+  deleteNews(id: Int!): News
+  saveNews(news: NewsInput!): News
+  saveNewsAttributes(attributes: [NewsAttributeInput]!, id: Int!): News
 
   """Update an existing member"""
   updateMember(data: [AttributeInput]!, id: Int!): Member
@@ -467,22 +475,34 @@ input NestedStringNullableFilter {
 
 type News {
   attributes(after: NewsAttributeWhereUniqueInput, before: NewsAttributeWhereUniqueInput, first: Int, last: Int): [NewsAttribute!]!
+  author: String
   body: String!
   comments(after: NewsCommentWhereUniqueInput, before: NewsCommentWhereUniqueInput, first: Int, last: Int): [NewsComment!]!
   createdDate: DateTime!
+  draft: Boolean
   id: Int!
+  path: String
   publishDate: DateTime!
+  socialSummary: String
   title: String!
+  uuid: String
 }
 
 type NewsAttribute {
   name: String!
   news: News!
+  newsId: Int!
+  value: String
+}
+
+input NewsAttributeInput {
+  name: String
   value: String
 }
 
 input NewsAttributeWhereUniqueInput {
   id: Int
+  idx_unique_news_attribute_news_id_name: Idx_unique_news_attribute_news_id_nameCompoundUniqueInput
 }
 
 type NewsComment {
@@ -493,6 +513,21 @@ type NewsComment {
 
 input NewsCommentWhereUniqueInput {
   id: Int
+}
+
+"""Input for creating or updating News"""
+input NewsInput {
+  attributes: [NewsAttributeInput]
+  author: String
+  body: String
+  createdDate: DateTime
+  draft: Boolean
+  id: Int
+  path: String
+  publishDate: DateTime
+  socialSummary: String
+  title: String
+  uuid: String
 }
 
 type Order {
@@ -661,12 +696,16 @@ input PriceListWhereUniqueInput {
 
 type Query {
   attributes: [AttributeDefinition]
-  feed: [News]
+  feed(page: Int): [News]
   member(id: Int!): Member
   members: [Member]
   membershipCategories(where: MemberCategoryWhereInput): [MemberCategory]
   memberSummary(length: Int!, start: Int!): [Member]
   myOrders: [Order]
+  news(length: Int!, searchString: String, start: Int!): [News]
+  newsItem(id: Int!): News
+  newsItemByPath(path: String!): News
+  newsTotals(searchString: String): Totals
   orders(where: OrderWhereInput): [Order]
 }
 
@@ -714,4 +753,12 @@ input StringNullableFilter {
   not: NestedStringNullableFilter
   notIn: [String!]
   startsWith: String
+}
+
+type Totals {
+  """Total amount of records matching the criteria"""
+  totalMatching: Int
+
+  """Total amount of records of given type"""
+  totalRecords: Int
 }
